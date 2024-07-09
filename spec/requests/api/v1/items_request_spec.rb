@@ -29,19 +29,19 @@ describe "items API" do
 
     expect(response).to be_successful
 
-    items = JSON.parse(response.body, symbolize_names: true)
-
+    items = JSON.parse(response.body, symbolize_names: true)[:data]
+ #binding.pry
     expect(items.count).to eq(3)
 
     items.each do |item| 
-      expect(item).to have_key(:name)
-      expect(item[:name]).to be_a String
+      expect(item[:attributes]).to have_key(:name)
+      expect(item[:attributes][:name]).to be_a String
 
-      expect(item).to have_key(:description)
-      expect(item[:description]).to be_a String
+      expect(item[:attributes]).to have_key(:description)
+      expect(item[:attributes][:description]).to be_a String
 
-      expect(item).to have_key(:unit_price)
-      expect(item[:unit_price]).to be_a Float
+      expect(item[:attributes]).to have_key(:unit_price)
+      expect(item[:attributes][:unit_price]).to be_a Float
     end
   end
 
@@ -56,18 +56,18 @@ describe "items API" do
     )
 
     get "/api/v1/items/#{item_1.id}"
-    item_1 = JSON.parse(response.body, symbolize_names: true)
+    item_1 = JSON.parse(response.body, symbolize_names: true)[:data]
 
     expect(response).to be_successful
 
-    expect(item_1).to have_key(:name)
-    expect(item_1[:name]).to be_a String
+    expect(item_1[:attributes]).to have_key(:name)
+    expect(item_1[:attributes][:name]).to be_a String
 
-    expect(item_1).to have_key(:description)
-    expect(item_1[:description]).to be_a String
+    expect(item_1[:attributes]).to have_key(:description)
+    expect(item_1[:attributes][:description]).to be_a String
 
-    expect(item_1).to have_key(:unit_price)
-    expect(item_1[:unit_price]).to be_a Float
+    expect(item_1[:attributes]).to have_key(:unit_price)
+    expect(item_1[:attributes][:unit_price]).to be_a Float
   end
 
   it "can create a new item" do

@@ -2,26 +2,32 @@ class Api::V1::ItemsController < ApplicationController
     def index
         if params[:merchant_id]
             @merchant = Merchant.find(params[:merchant_id])
-            render json: @merchant.items
+            render json: ItemSerializer.new(@merchant.items)
         else
-            render json: Item.all
+            items = Item.all
+            render json: ItemSerializer.new(items)
         end
     end
 
     def show
-        render json: Item.find(params[:id])
+        item = Item.find(params[:id])
+        render json: ItemSerializer.new(item)
     end
 
     def create
-        render json: Item.create(item_params)
+        item = Item.create(item_params)
+        render json: ItemSerializer.new(item)
     end
 
     def update
-        render json: Item.update(params[:id], item_params)
+        item = Item.update(params[:id], item_params)
+        render json: ItemSerializer.new(item)
     end
 
     def destroy
-        render json: Item.destroy(params[:id])
+        item = Item.destroy(params[:id])
+        render json: ItemSerializer.new(item)
+        
     end
 
     private
