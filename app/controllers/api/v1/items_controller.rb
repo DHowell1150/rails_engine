@@ -1,4 +1,5 @@
 class Api::V1::ItemsController < ApplicationController
+    rescue_from ActiveRecord::RecordNotFound, with: :no_record_found
     def index
         if params[:merchant_id]
             @merchant = Merchant.find(params[:merchant_id])
@@ -16,7 +17,7 @@ class Api::V1::ItemsController < ApplicationController
 
     def create
         item = Item.create(item_params)
-        render json: ItemSerializer.new(item)
+        render json: ItemSerializer.new(item), status: 201
     end
 
     def update
@@ -34,5 +35,9 @@ class Api::V1::ItemsController < ApplicationController
     
     def item_params
         params.require(:item).permit(:name, :description, :unit_price, :merchant_id)
+    end
+
+    def no_record_found(error)
+        render json: ErrorSerializer.new(ErrorMessage.new(error.message, 404)).serialize_json, status: 404
     end
 end
