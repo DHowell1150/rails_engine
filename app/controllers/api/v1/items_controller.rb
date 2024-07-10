@@ -1,5 +1,5 @@
 class Api::V1::ItemsController < ApplicationController
-    # rescue_from ActiveRecord::RecordNotFound, with: :no_record_found
+    rescue_from ActiveRecord::RecordNotFound, with: :no_record_found
 
     def index
         if params[:merchant_id]
