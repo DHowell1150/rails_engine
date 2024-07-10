@@ -1,5 +1,6 @@
 class Api::V1::ItemsController < ApplicationController
-    rescue_from ActiveRecord::RecordNotFound, with: :no_record_found
+    # rescue_from ActiveRecord::RecordNotFound, with: :no_record_found
+
     def index
         if params[:merchant_id]
             @merchant = Merchant.find(params[:merchant_id])
@@ -28,7 +29,11 @@ class Api::V1::ItemsController < ApplicationController
     def destroy
         item = Item.destroy(params[:id])
         render json: ItemSerializer.new(item)
-        
+    end
+
+    def merchant
+        item = Item.find(params[:item_id])
+        render json: MerchantSerializer.new(item.merchant)
     end
 
     private
