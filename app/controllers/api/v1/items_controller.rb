@@ -43,21 +43,18 @@ class Api::V1::ItemsController < ApplicationController
       if params[:name] && (params[:min_price] || params[:max_price])
         render json: ErrorSerializer.new.invalid_parameters(ErrorMessage("Too many Parameters", 400))
       elsif params[:name]
-        # items = Item.find_items_by_name(params[:name])
-        # require 'pry' ; binding.pry
-        # render json: SearchSerializer.format_search(items)
         items = []
         item = Item.find_items_by_name(params[:name])
         items << item
         render json: ItemSerializer.new(items)
-
-      elsif params[:min_price] || params[:max_price]
+      elsif params[:min_price] && params[:max_price]
         items = Item.find_by_min_max(params[:min_price], params[:max_price])
+        render json: ItemSerializer.new(items)
+      elsif (params[:min_price] || params[:max_price])
         items = Item.find_by_min_price(params[:min_price]) if params[:min_price]
         items = Item.find_by_max_price(params[:max_price]) if params[:max_price]
 
-   
-        render json: SearchSerializer.format_search(items)
+        render json: ItemSerializer.new(items)
       else 
         render json: ErrorSerializer.new.invalid_parameters(ErrorMessage("Wrong Parameters", 400))
       end

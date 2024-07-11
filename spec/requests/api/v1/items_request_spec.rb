@@ -237,10 +237,10 @@ describe "items API" do
     get "/api/v1/items/find_all?min_price=240"
     expect(response).to be_successful
     json = JSON.parse(response.body, symbolize_names: true)[:data]
+    expect(json).to be_an(Array)
     expect(json.length).to be(2)
-    expect(json).to include(item_1)
-    expect(json).to include(item_2)
-    expect(json).not_to include(item_3)
+    expect(json.first[:attributes][:name]).to eq("turing")
+    expect(json.last[:attributes][:name]).to eq("ring game")
   end
 
   it "can search max price" do 
@@ -268,11 +268,12 @@ describe "items API" do
     )
 
     get "/api/v1/items/find_all?max_price=240"
-    expect(response).to be(successful)
+    expect(response).to be_successful
     json = JSON.parse(response.body, symbolize_names: true)[:data]
+
     expect(json.length).to be(2)
-    expect(json).to match_array([item_2, item_3])
-    expect(json).not_to include?(item_1)
+    expect(json.first[:attributes][:name]).to eq("ring game")
+    expect(json.last[:attributes][:name]).to eq("anything")
   end
 
   it "can search min and max price" do 
@@ -299,12 +300,10 @@ describe "items API" do
           merchant_id: merchant.id
       )
       get "/api/v1/items/find_all?max_price=1000&min_price=60"
-      expect(response).to be(successful)
+      expect(response).to be_successful
       json = JSON.parse(response.body, symbolize_names: true)[:data]
       expect(json.length).to be(1)
-      expect(json).to eq([item_2])
-      expect(json).not_to include?(item_1)
-      expect(json).not_to include?(item_3)
+      expect(json.first[:attributes][:name]).to eq("ring game")
   end
 
 
