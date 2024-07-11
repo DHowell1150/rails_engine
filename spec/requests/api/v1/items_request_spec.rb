@@ -171,17 +171,62 @@ describe "items API" do
       expect(data[:errors].first[:status]).to eq("404")
       expect(data[:errors].first[:title]).to eq("Couldn't find Item with 'id'=1")
     end
+
+    it "sad path 2" do
+      item_id = create(:item).id
+      item_params = (
+        {
+          merchant_id: 1  
+        }
+      )
+
+      headers = {"CONTENT_TYPE" => "application/json"}
+
+      put "/api/v1/items/#{item_id}", headers: headers, params: JSON.generate(item: item_params)
+
+      expect(response).to_not be_successful
+      expect(response.status).to eq(422)
+
+      data = JSON.parse(response.body, symbolize_names: true)
+
+      expect(data[:errors]).to be_an(Array)
+      expect(data[:errors].first[:status]).to eq("422")
+      expect(data[:errors].first[:title]).to eq("Validation failed: Merchant must exist")
+    end
   end
 
-  it "can destroy an item" do
-    merchant = create(:merchant)
-    item_2 = Item.create!(
-      name: "paste",
-      description: "thing",
-      unit_price: 1.5,
-      merchant_id: merchant.id
-    )
-    expect{ delete "/api/v1/items/#{item_2.id}" }.to change(Item, :count).by(-1) # why the hash?
-    expect{Item.find(item_2.id)}.to raise_error(ActiveRecord::RecordNotFound) # why  hash after expect?
+  describe "can destroy an item" do
+    it "happy path" do
+      merchant = create(:merchant)
+      item_2 = Item.create!(
+        name: "paste",
+        description: "thing",
+        unit_price: 1.5,
+        merchant_id: merchant.id
+      )
+      expect{ delete "/api/v1/items/#{item_2.id}" }.to change(Item, :count).by(-1) # why the hash?
+      expect{Item.find(item_2.id)}.to raise_error(ActiveRecord::RecordNotFound) # why  hash after expect?
+    end
+
+    it "sad path" do
+      item_params = { name: "paste",
+                      description: "thing",
+                      unit_price: 1.5,
+                      merchant_id: 1
+      }
+      headers = {"CONTENT_TYPE" => "application/json"}
+    
+      # We include this header to make sure that these params are passed as JSON rather than as plain text
+      delete "/api/v1/items/1", headers: headers, params: JSON.generate({item: item_params})
+
+      expect(response).to_not be_successful
+      expect(response.status).to eq(404)
+
+      data = JSON.parse(response.body, symbolize_names: true)
+      
+      expect(data[:errors]).to be_a(Array)
+      expect(data[:errors].first[:status]).to eq("404")
+      expect(data[:errors].first[:title]).to eq("Couldn't find Item with 'id'=1")
+    end
   end
 end

@@ -26,17 +26,17 @@ class Api::V1::ItemsController < ApplicationController
     end
 
     def update
-      item = Item.update!(params[:id], item_params)
-      render json: ItemSerializer.new(item) 
+      begin
+        item = Item.update!(params[:id], item_params)
+        render json: ItemSerializer.new(item) 
+      rescue ActiveRecord::RecordInvalid => e
+        render json: ErrorSerializer.new(ErrorMessage.new(e.message, 422)).serialize_json, status: 422
+      end   
     end
     
     def destroy
       item = Item.destroy(params[:id])
       render json: ItemSerializer.new(item)
-      # begin
-      # rescue ActiveModel::ValidationError => exception
-      #   #render json: ErrorSerializer.new(ErrorMessage.new(exception.message, 400)).serialize_json, status: 400
-      # end 
     end
 
     def merchant
