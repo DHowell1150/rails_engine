@@ -30,7 +30,7 @@ describe "items API" do
     expect(response).to be_successful
 
     items = JSON.parse(response.body, symbolize_names: true)[:data]
- #binding.pry
+
     expect(items.count).to eq(3)
 
     items.each do |item| 
@@ -45,72 +45,132 @@ describe "items API" do
     end
   end
 
-  it "can get one item by its id" do
-    merchant = create(:merchant)
+  describe "can get one item by its id" do
+    it "happy path" do
+      merchant = create(:merchant)
 
-    item_1 = Item.create!(
-        name: "toothbrush",
+      item_1 = Item.create!(
+          name: "toothbrush",
+          description: "thing",
+          unit_price: 1.5,
+          merchant_id: merchant.id
+      )
+
+      get "/api/v1/items/#{item_1.id}"
+      item_1 = JSON.parse(response.body, symbolize_names: true)[:data]
+
+      expect(response).to be_successful
+
+      expect(item_1[:attributes]).to have_key(:name)
+      expect(item_1[:attributes][:name]).to be_a String
+
+      expect(item_1[:attributes]).to have_key(:description)
+      expect(item_1[:attributes][:description]).to be_a String
+
+      expect(item_1[:attributes]).to have_key(:unit_price)
+      expect(item_1[:attributes][:unit_price]).to be_a Float
+    end
+
+    it "sad path" do
+      get "/api/v1/items/123123"
+
+      expect(response).to_not be_successful
+      expect(response.status).to eq(404)
+
+      data = JSON.parse(response.body, symbolize_names: true)
+
+      expect(data[:errors]).to be_an(Array)
+      expect(data[:errors].first[:status]).to eq("404")
+      expect(data[:errors].first[:title]).to eq("Couldn't find Item with 'id'=123123")
+    end
+  end
+
+  describe "can create a new item" do
+    it "happy path" do
+      merchant = create(:merchant)
+
+      item_params = ({
+        name: "paste",
         description: "thing",
         unit_price: 1.5,
         merchant_id: merchant.id
-    )
+        })
 
-    get "/api/v1/items/#{item_1.id}"
-    item_1 = JSON.parse(response.body, symbolize_names: true)[:data]
+      headers = {"CONTENT_TYPE" => "application/json"}
 
-    expect(response).to be_successful
+      post "/api/v1/items", headers: headers, params: JSON.generate(item: item_params)
+      created_item = Item.last
 
-    expect(item_1[:attributes]).to have_key(:name)
-    expect(item_1[:attributes][:name]).to be_a String
+      expect(response).to be_successful
+      expect(created_item.name).to eq(item_params[:name])
+      expect(created_item.description).to eq(item_params[:description])
+      expect(created_item.unit_price).to eq(item_params[:unit_price])
+      expect(created_item.merchant_id).to eq(merchant.id)
+    end
 
-    expect(item_1[:attributes]).to have_key(:description)
-    expect(item_1[:attributes][:description]).to be_a String
+    it "returns a 422 status and error message when missing any required attribute" do  
+      item_params = (
+        {
+          name: "string",
+          description: "long",
+          unit_price: 10.0
+          
+        }
+      )
 
-    expect(item_1[:attributes]).to have_key(:unit_price)
-    expect(item_1[:attributes][:unit_price]).to be_a Float
+      headers = {"CONTENT_TYPE" => "application/json"}
+
+      post "/api/v1/items", headers: headers, params: JSON.generate(item: item_params)
+
+      expect(response).to_not be_successful
+      expect(response.status).to eq(422)
+
+      data = JSON.parse(response.body, symbolize_names: true)
+
+      expect(data[:errors]).to be_an(Array)
+      expect(data[:errors].first[:status]).to eq("422")
+      expect(data[:errors].first[:title]).to eq("Validation failed: Merchant must exist, Merchant can't be blank")
+    end
   end
 
-  it "can create a new item" do
-    merchant = create(:merchant)
+  describe "can update an existing item" do
+    it "happy path" do
+      merchant = create(:merchant)
+      item_2 = Item.create!(
+        name: "paste",
+        description: "thing",
+        unit_price: 1.5,
+        merchant_id: merchant.id
+      )
+      
+      previous_name = Item.last.name
+      
+      item_params = {name: "Toothpaste"}
+      headers = {"CONTENT_TYPE" => "application/json"}
+      patch "/api/v1/items/#{item_2.id}", headers: headers, params: JSON.generate({item: item_params})
+      item = Item.find_by(id: item_2.id)  
 
-    item_params = ({
-      name: "paste",
-      description: "thing",
-      unit_price: 1.5,
-      merchant_id: merchant.id
-      })
+      expect(response).to be_successful
+      expect(item.name).not_to eq(previous_name)
+      expect(item.name).to eq("Toothpaste")
+    end
 
-    headers = {"CONTENT_TYPE" => "application/json"}
-
-    post "/api/v1/items", headers: headers, params: JSON.generate(item: item_params)
-    created_item = Item.last
-
-    expect(response).to be_successful
-    expect(created_item.name).to eq(item_params[:name])
-    expect(created_item.description).to eq(item_params[:description])
-    expect(created_item.unit_price).to eq(item_params[:unit_price])
-    expect(created_item.merchant_id).to eq(merchant.id)
-  end
-
-  it "can update an existing item" do
-    merchant = create(:merchant)
-    item_2 = Item.create!(
-      name: "paste",
-      description: "thing",
-      unit_price: 1.5,
-      merchant_id: merchant.id
-    )
+    it "sad path" do
+      item_params = { description: "Char" }
+      headers = {"CONTENT_TYPE" => "application/json"}
     
-    previous_name = Item.last.name
-    
-    item_params = {name: "Toothpaste"}
-    headers = {"CONTENT_TYPE" => "application/json"}
-    patch "/api/v1/items/#{item_2.id}", headers: headers, params: JSON.generate({item: item_params})
-    item = Item.find_by(id: item_2.id)  
+      # We include this header to make sure that these params are passed as JSON rather than as plain text
+      patch "/api/v1/items/1", headers: headers, params: JSON.generate({item: item_params})
 
-    expect(response).to be_successful
-    expect(item.name).not_to eq(previous_name)
-    expect(item.name).to eq("Toothpaste")
+      expect(response).to_not be_successful
+      expect(response.status).to eq(404)
+
+      data = JSON.parse(response.body, symbolize_names: true)
+      
+      expect(data[:errors]).to be_a(Array)
+      expect(data[:errors].first[:status]).to eq("404")
+      expect(data[:errors].first[:title]).to eq("Couldn't find Item with 'id'=1")
+    end
   end
 
   it "can destroy an item" do

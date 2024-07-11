@@ -27,20 +27,35 @@ describe "Merchants API" do
       end
     end
 
-    it "can get one merchant by its id" do
-      id = create(:merchant).id
+    describe "can get one merchant by its id" do
+      it "happpy path" do
+        id = create(:merchant).id
 
-      get "/api/v1/merchants/#{id}"
+        get "/api/v1/merchants/#{id}"
 
-      merchant = JSON.parse(response.body, symbolize_names: true)[:data]
+        merchant = JSON.parse(response.body, symbolize_names: true)[:data]
 
-      expect(response).to be_successful
+        expect(response).to be_successful
 
-      expect(merchant).to have_key(:id)
-      expect(merchant[:id]).to be_a(String)
+        expect(merchant).to have_key(:id)
+        expect(merchant[:id]).to be_a(String)
 
-      expect(merchant[:attributes]).to have_key(:name)
-      expect(merchant[:attributes][:name]).to be_a(String)
+        expect(merchant[:attributes]).to have_key(:name)
+        expect(merchant[:attributes][:name]).to be_a(String)
+      end
+
+      it "sad path" do
+        get "/api/v1/merchants/123123"
+
+        expect(response).to_not be_successful
+        expect(response.status).to eq(404)
+
+        data = JSON.parse(response.body, symbolize_names: true)
+
+        expect(data[:errors]).to be_an(Array)
+        expect(data[:errors].first[:status]).to eq("404")
+        expect(data[:errors].first[:title]).to eq("Couldn't find Merchant with 'id'=123123")
+      end
     end
 
     it "can get items for a specific merchant" do
