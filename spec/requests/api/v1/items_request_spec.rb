@@ -184,4 +184,127 @@ describe "items API" do
     expect{ delete "/api/v1/items/#{item_2.id}" }.to change(Item, :count).by(-1) # why the hash?
     expect{Item.find(item_2.id)}.to raise_error(ActiveRecord::RecordNotFound) # why  hash after expect?
   end
+
+  it "can search with name" do 
+    merchant = create(:merchant)
+
+      item_1 = Item.create!(
+          name: "turing",
+          description: "thing",
+          unit_price: 2500,
+          merchant_id: merchant.id
+      )
+
+      item_2 = Item.create!(
+          name: "ring game",
+          description: "thing",
+          unit_price: 240,
+          merchant_id: merchant.id
+      )
+
+    get "/api/v1/items/find_all?name=ring"
+    expect(response).to be_successful
+    json = JSON.parse(response.body, symbolize_names: true)[:data]
+    expect(json).to be_an(Array)
+    expect(json.length).to eq(1)
+    expect(json.first[:attributes][:name]).to eq("ring game")
+  end
+
+  it "can search min price" do 
+    merchant = create(:merchant)
+
+    item_1 = Item.create!(
+        name: "turing",
+        description: "thing",
+        unit_price: 2500,
+        merchant_id: merchant.id
+    )
+
+    item_2 = Item.create!(
+        name: "ring game",
+        description: "thing",
+        unit_price: 240,
+        merchant_id: merchant.id
+    )
+
+    item_3 = Item.create!(
+        name: "anything",
+        description: "thing",
+        unit_price: 50,
+        merchant_id: merchant.id
+    )
+
+    get "/api/v1/items/find_all?min_price=240"
+    expect(response).to be_successful
+    json = JSON.parse(response.body, symbolize_names: true)[:data]
+    expect(json).to be_an(Array)
+    expect(json.length).to be(2)
+    expect(json.first[:attributes][:name]).to eq("turing")
+    expect(json.last[:attributes][:name]).to eq("ring game")
+  end
+
+  it "can search max price" do 
+    merchant = create(:merchant)
+
+    item_1 = Item.create!(
+        name: "turing",
+        description: "thing",
+        unit_price: 2500,
+        merchant_id: merchant.id
+    )
+
+    item_2 = Item.create!(
+        name: "ring game",
+        description: "thing",
+        unit_price: 240,
+        merchant_id: merchant.id
+    )
+
+    item_3 = Item.create!(
+        name: "anything",
+        description: "thing",
+        unit_price: 50,
+        merchant_id: merchant.id
+    )
+
+    get "/api/v1/items/find_all?max_price=240"
+    expect(response).to be_successful
+    json = JSON.parse(response.body, symbolize_names: true)[:data]
+
+    expect(json.length).to be(2)
+    expect(json.first[:attributes][:name]).to eq("ring game")
+    expect(json.last[:attributes][:name]).to eq("anything")
+  end
+
+  it "can search min and max price" do 
+    merchant = create(:merchant)
+
+      item_1 = Item.create!(
+          name: "turing",
+          description: "thing",
+          unit_price: 2500,
+          merchant_id: merchant.id
+      )
+
+      item_2 = Item.create!(
+          name: "ring game",
+          description: "thing",
+          unit_price: 240,
+          merchant_id: merchant.id
+      )
+
+      item_3 = Item.create!(
+          name: "anything",
+          description: "thing",
+          unit_price: 50,
+          merchant_id: merchant.id
+      )
+      get "/api/v1/items/find_all?max_price=1000&min_price=60"
+      expect(response).to be_successful
+      json = JSON.parse(response.body, symbolize_names: true)[:data]
+      expect(json.length).to be(1)
+      expect(json.first[:attributes][:name]).to eq("ring game")
+  end
+
+
 end
