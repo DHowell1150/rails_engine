@@ -15,6 +15,7 @@ RSpec.describe 'Find Merchant API' do
         expect(json[:attributes][:name]).to eq(merchant1.name)
         expect(json[:id].to_i).to_not eq(merchant2.id)
     end
+    
     it 'can find a single merchant by name case-insensitive' do
         merchant1 = Merchant.create!(name: "Ring World")
         merchant2 = Merchant.create!(name: "Turing")

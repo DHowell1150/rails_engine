@@ -8,7 +8,7 @@ class ErrorSerializer
             errors: [
                 {
                     status: @error.status.to_s,
-                    title: @error.title,
+                    title: @error.message,
                 }
             ]
         }
