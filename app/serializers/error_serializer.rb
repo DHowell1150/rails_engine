@@ -13,4 +13,17 @@ class ErrorSerializer
             ]
         }
     end
+
+    def invalid_params
+        {
+            data: {
+                errors: [
+                    {
+                        status: @error.status.to_s,
+                        title: @error.message,
+                    }
+                ]
+            }
+        }
+    end
 end

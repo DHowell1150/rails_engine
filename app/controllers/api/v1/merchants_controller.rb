@@ -14,9 +14,13 @@ class Api::V1::MerchantsController < ApplicationController
   end
 
   def find
-    if params[:name]
-      merchant = Merchant.find_merchant_by_name(params[:name])
+  if params[:name]
+    merchant = Merchant.find_merchant_by_name(params[:name])
+    if merchant.nil?
+      render json: ErrorSerializer.new(ErrorMessage.new("Merchant not found", 404)).invalid_params, status: 404
+    else
       render json: MerchantSerializer.new(merchant)
     end
   end
+end
 end
