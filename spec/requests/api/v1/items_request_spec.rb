@@ -251,7 +251,7 @@ describe "items API" do
     expect(response).to be_successful
     json = JSON.parse(response.body, symbolize_names: true)[:data]
     expect(json).to be_an(Array)
-    expect(json.length).to eq(1)
+    expect(json.length).to eq(2)
     expect(json.first[:attributes][:name]).to eq("ring game")
   end
 
